@@ -4,7 +4,7 @@ from node import Node
 
 
 
-# WARNING: does not work yiet
+# WARNING: does not work yet
 class Solver:
     def __init__(self, source: Node):
         assert isinstance(source, Node), '[BadArgumentError] source type: {0} expected: {1}'.format(type(source), type(Node))
