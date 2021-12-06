@@ -7,13 +7,27 @@ Created on Thu Oct 21 10:17:09 2021
 @e-mail: princy.m.rasolonjatovo@gmail.com
 """
 from __future__ import annotations
-from copy import deepcopy
+from copy import deepcopy, copy
 from typing import List, Any, Callable
 
 
+class _List(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setitemCallback: Callable[[int, type, int], None] = kwargs.get('setitemCallback')
+        self._last_index = kwargs.get('last_index')
+    
+    def __getitem__(self, index):
+        return super().__getitem__(index)
+
+    def __setitem__(self, index, value):
+        if self.setitemCallback is not None:
+            self.setitemCallback(index, value, self._last_index)
+        return super().__setitem__(index, value)
+
 
 class Slide:
-    def __init__(self, lines: int=3, cols: int=3, hole_pos: tuple=(2,2), **kwargs):
+    def __init__(self, lines: int, cols: int, hole_pos: tuple | None= None, **kwargs):
         """
         Represent a SliddingPuzzle state
 
@@ -33,8 +47,7 @@ class Slide:
         """
         self._lines = lines
         self._cols = cols
-        
-        self._mat = [[0 for c in range(cols)] for _ in range(lines)]
+        self._mat = []
         self._hole_pos = hole_pos
         self._hasfreezed = False # self._mat has been freezed?
         
@@ -57,11 +70,13 @@ class Slide:
         return self._hole_pos
     
     def __repr__(self):
-        _s = ""
-        for i in range(self.lines):
-            _s += repr(self._mat[i])
-            _s += '\n'
-        return "Slide<\n{0}>\n".format(_s)
+        __repr = """"""
+        for i in range(self._lines * self._cols):
+            if i % self._cols == 0:
+                __repr += '\n'
+            __repr += '%3d' % (self._mat[i])
+        return __repr
+        
      
     def __eq__(self, o: Slide) -> bool:
         if isinstance(o, Slide):
@@ -69,17 +84,20 @@ class Slide:
         return False
     
     def __build_mat(self):
-        n = 1
-        hi, hj = self._hole_pos 
-        for i in range(self.lines):
-            for j in range(self.cols):
-                if (i, j) != (hi, hj):
-                    self._mat[i][j] = n
-                    n += 1
-                    
+        self._mat = [i + 1 for i in range(self._lines * self._cols)]
+        if self._hole_pos is None:
+            self._mat[self._lines * self._cols - 1] = 0
+            self._hole_pos = (self._lines - 1, self._cols - 1)
+        else:
+            i, j = self._hole_pos
+            self._mat[i + j * self._cols] = 0
+
+    def copy(self) -> Slide:
+        return deepcopy(self)
+
     def __freeze_mat(self):
         if not self._hasfreezed:
-            self._mat = tuple(map(tuple, self._mat))
+            self._mat = tuple(self._mat)
             self._hasfreezed = True
     
     def freeze(self):
@@ -89,8 +107,33 @@ class Slide:
         assert not self._hasfreezed,"[TileHasFreezedError] The mat is immutable"
         i, j = pos
         assert i < self.lines and j < self.cols and i >= 0 and i >= 0, "[BadIndex] i:{0}, j{1}".format(i, j)
-        self._mat[i][j] = val
-    
+        self[i][j] = val
+
+    def __getitem__(self, index: int):
+        if index < 0 or index >= self._lines:
+            raise IndexError(f'index {index} off-limits, matrix size({self._lines}, {self._cols})')
+        return _List(self._mat[index * self.lines: index * self.lines + self._cols], setitemCallback=self.__get_col_guard_callback, last_index=index)
+
+    def __setitem__(self, i: int, value: list[int]):
+        # check dimension
+        if isinstance(value, (list, tuple)):
+            if len(value) == self._cols:
+                for j, v in enumerate(value):
+                    self._mat[i + 1 + j] = v
+            else:
+                raise Exception(f'[DimensionError] cannot assign object of dimension {len(value)} into {self._cols} dim')
+        else:
+            raise TypeError(f'Cannot assign type {type(value)}')
+        print(f'i: {i} val: {value}')
+
+    def __get_col_guard_callback(self, index: int, value: type, last_index: int):
+        # check if index is int (col)
+        if isinstance(index, int):
+            # assign to the value in self._mat at coordinates(last_index, index) object[last_index][index] = value
+            self._mat[self._cols * last_index + index] = value
+        else:
+            raise Exception('[BadIndex]')
+
     def move_hole(self, pos: tuple) -> list:
         """
         Constraint<BoardBoundaries>
@@ -115,10 +158,9 @@ class Slide:
     def __swap_tiles(self, t1: tuple, t2: tuple):
         t1_i, t1_j = t1
         t2_i, t2_j = t2
-        t1_val = self._mat[t1_i][t1_j]
-        t2_val = self._mat[t2_i][t2_j]
-        self._mat[t1_i][t1_j] = t2_val
-        self._mat[t2_i][t2_j] = t1_val
+        t1_val = self[t1_i][t1_j]
+        self[t1_i][t1_j] = self[t2_i][t2_j]
+        self[t2_i][t2_j] = t1_val
     
     def move_hole_up(self) -> bool:
         assert not self._hasfreezed, "[TileHasFreezedError] The mat is immutable"
@@ -137,7 +179,7 @@ class Slide:
         assert not self._hasfreezed, "[TileHasFreezedError] The mat is immutable"
         hi, hj = self._hole_pos
         i, j = -1, -1
-        if hi+1 < self.lines:
+        if hi + 1 < self.lines:
             i = hi
             j = hj
             hi += 1
@@ -150,7 +192,7 @@ class Slide:
         assert not self._hasfreezed, "[TileHasFreezedError] The mat is immutable"
         hi, hj = self._hole_pos
         i, j = -1, -1
-        if hj+1 < self.cols:
+        if hj + 1 < self.cols:
             i = hi
             j = hj
             hj += 1
@@ -163,7 +205,7 @@ class Slide:
         assert not self._hasfreezed, "[TileHasFreezedError] The mat is immutable"
         hi, hj = self._hole_pos
         i, j = -1, -1
-        if hj-1 >= 0:
+        if hj - 1 >= 0:
             i = hi
             j = hj
             hj -= 1
@@ -176,11 +218,11 @@ class Slide:
         return deepcopy(self)
     
     def __hash__(self):
-        return hash(tuple(map(tuple, self._mat)))
+        return hash(tuple(self._mat))
     
     def get_movements(self) -> list[Slide]:
         """
-            Get possible Tile conformation on one move
+            Get possible Tile conformations on one move
         Returns
         -------
         list<Slide>
@@ -201,8 +243,4 @@ class Slide:
             slides.append(self.copy())
             self.move_hole_up()
         return slides
-# Test
-s = Slide()
-s.move_hole_up()
-        
-        
+     
