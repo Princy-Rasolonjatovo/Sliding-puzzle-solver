@@ -8,30 +8,35 @@ Created on Thu Oct 21 12:34:13 2021
 """
 from __future__ import annotations
 from slide import Slide
-from typing import Any
+from typing import List
+
 
 class Node:
     def __init__(self, value: Any, parent: Node= None):
         self.value:Any = value
         self.parent:Node = parent
         self.visited:bool = False
-        
+        self.g = 0
+        self.h = 0
+    
+    @property
+    def d(self) -> float:
+        return self.g + self.h
+    
     def walk(self):
         pass
-    
-    def __eq__(self, o: Node) -> bool:
-        return (
-            self.state == o.state and 
-            self.slide == o.slide and
-            self.parent == o.parent)
-    
 
+    def __hash__(self):
+        return hash(self.value)
 
-class SlideNode:
-    def __init__(self, value: Slide, parent: SlideNode=None):
-        pass
-    def __gt__(self, o: Node) -> bool:
-        pass
+    def __eq__(self, other: Node) -> bool:
+        return hash(self.value) == hash(other.value)
 
-    def __lt__(self, o: Node) -> bool:
-        pass
+    def __lt__(self, other: Node) -> bool:
+        return self.d < other.d
+
+    def __gt__(self, other: Node):
+        return self.d > other.d
+
+    def childrens(self) -> List[Slide]:
+        return self.value.get_movements()
