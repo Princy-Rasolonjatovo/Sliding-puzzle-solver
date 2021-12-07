@@ -15,7 +15,7 @@ from node import Node
 if __name__ == '__main__':
     start = Slide(3, 3)
     goal = Slide(3, 3)
-    slide_shuffle(start, move_count=50)
+    slide_shuffle(start, move_count=10)
     solver = AStarSolver(Node(value=start), Node(value=goal))
     s = solver.solve()
     if s is not None:
