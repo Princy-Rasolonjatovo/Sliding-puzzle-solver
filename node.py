@@ -8,10 +8,11 @@ Created on Thu Oct 21 12:34:13 2021
 """
 from __future__ import annotations
 from slide import Slide
+from typing import Any
 
 class Node:
-    def __init__(self, value: Slide, parent: Node= None):
-        self.value:Slide = value
+    def __init__(self, value: Any, parent: Node= None):
+        self.value:Any = value
         self.parent:Node = parent
         self.visited:bool = False
         
@@ -23,4 +24,14 @@ class Node:
             self.state == o.state and 
             self.slide == o.slide and
             self.parent == o.parent)
+    
 
+
+class SlideNode:
+    def __init__(self, value: Slide, parent: SlideNode=None):
+        pass
+    def __gt__(self, o: Node) -> bool:
+        pass
+
+    def __lt__(self, o: Node) -> bool:
+        pass
