@@ -9,7 +9,7 @@ Created on Thu Oct 21 10:17:09 2021
 from __future__ import annotations
 from copy import deepcopy, copy
 from typing import List, Any, Callable
-
+from math import dist
 
 class _List(list):
     def __init__(self, *args, **kwargs):
@@ -219,6 +219,10 @@ class Slide:
     
     def __hash__(self):
         return hash(tuple(self._mat))
+
+    @classmethod
+    def dist(s1: Slide, s2: Slide) -> float:
+        return dist(s1.mat, s2.mat)
     
     def get_movements(self) -> list[Slide]:
         """
