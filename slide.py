@@ -72,7 +72,7 @@ class Slide:
     def __repr__(self):
         _repr = """"""
         for i in range(self._lines * self._cols):
-            if i % self._cols == 0 and i > 0:
+            if i % self._cols == 0:
                 _repr += '\n'
             _repr += '%3d' % (self._mat[i])
         return _repr
@@ -112,13 +112,13 @@ class Slide:
         assert len(pos) == 2, '[BadIndex] expected: tuple[int, int] got %s' % (pos)
         i, j = pos
         assert i < self.lines and j < self.cols and i >= 0 and i >= 0, "[BadIndex] i:{0}, j{1}".format(i, j)
-        return self._mat[(self.lines - 1) * i + (self.cols - 1) * j]
+        return self._mat[self.cols * i + j]
 
     def __set_tile(self, pos: tuple[int, int], val: int) -> None:
         assert len(pos) == 2, '[BadIndex] expected: tuple[int, int] got %s' % (pos)
         i, j = pos
         assert i < self.lines and j < self.cols and i >= 0 and i >= 0, "[BadIndex] i:{0}, j{1}".format(i, j)
-        self._mat[(self.lines - 1) * i + (self.cols - 1) * j] = val
+        self._mat[self.cols * i + j] = val
 
     # def __getitem__(self, index: int):
     #     if index < 0 or index >= self._lines:

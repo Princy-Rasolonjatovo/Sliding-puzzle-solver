@@ -1,0 +1,4 @@
+*.pyc
+__pycache__/slide_shuffler.cpython-39.pyc
+__pycache__/slide.cpython-39.pyc
+__pycache__/solver.cpython-39.pyc
